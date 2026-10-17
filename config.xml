@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.hesam.hastispace" version="1.0.0" xmlns="http://www.w3.org/ns/widgets">
+    <name>Hesam Space</name>
+    <description>Hesam &amp; Hasti Private Space</description>
+    <author email="hesam@example.com">Hesam</author>
+    <content src="index.html" />
+    <access origin="*" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+</widget>

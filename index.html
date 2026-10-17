@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hesam & Hasti Space</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body class="theme-dark">
+
+  <!-- صفحه ورود پین‌کد / اثر انگشت -->
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-card">
+      <h2>ورود به برنامه</h2>
+      <p>کد اختصاصی حسام یا هستی را وارد کنید</p>
+      <input type="password" id="pin-input" placeholder="کد 4 رقمی..." maxlength="4">
+      <button id="login-btn" class="submit-btn">ورود با کد 🔑</button>
+      <button id="biometric-btn" class="submit-btn bio-btn">ورود با اثر انگشت 👆</button>
+      <p id="auth-error" class="auth-error" style="display:none;">کد یا هویت تایید نشد!</p>
+    </div>
+  </div>
+
+  <!-- نمایش‌دهنده تمام‌صفحه عکس و ویدیو (Lightbox) -->
+  <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+    <span class="lightbox-close">&times;</span>
+    <div id="lightbox-content" class="lightbox-content" onclick="event.stopPropagation()"></div>
+  </div>
+
+  <div class="bg-glow"></div>
+  <div class="bg-glow-2"></div>
+
+  <div class="app-container">
+    <header class="app-header">
+      <div class="header-title">
+        <h1>Hesam & Hasti Space</h1>
+        <div class="status-row">
+          <span id="current-user-badge" class="user-badge">کاربر: -</span>
+          <span id="partner-status" class="status-badge">آفلاین</span>
+          <span id="typing-indicator" class="typing-badge" style="display:none;">در حال نوشتن... ✍️</span>
+        </div>
+      </div>
+      <div class="header-controls">
+        <select id="theme-selector" class="custom-select">
+          <option value="theme-dark">تاریک نئون</option>
+          <option value="theme-light">روشن مدرن</option>
+        </select>
+      </div>
+    </header>
+
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="chat-section">💬 چت</button>
+      <button class="tab-btn" data-tab="memories-section">📖 یادداشت‌ها</button>
+      <button class="tab-btn" data-tab="gallery-section">🖼️ گالری</button>
+      <button class="tab-btn" data-tab="music-section">🎵 موزیک</button>
+      <button class="tab-btn" data-tab="goals-section">🎯 اهداف</button>
+      <button class="tab-btn" data-tab="game-section">🎮 بازی‌ها</button>
+    </nav>
+
+    <main class="main-content">
+      <section id="chat-section" class="tab-content active">
+        <div class="chat-header-actions">
+          <!-- دکمه پاکسازی چت مخصوص حسام -->
+          <button id="clear-chat-btn" class="action-btn danger-btn" style="display:none;">🗑️ پاک کردن کل چت‌ها</button>
+        </div>
+        
+        <div id="chat-messages" class="chat-box"></div>
+        
+        <div class="chat-input-area">
+          <div class="chat-input-row">
+            <input type="text" id="chat-input" placeholder="پیامی بنویسید...">
+            <button id="send-chat-btn" class="icon-btn" title="ارسال">🚀</button>
+          </div>
+          <div class="chat-media-actions">
+            <button id="ai-question-btn" class="action-btn ai-btn">🤖 سوال بی‌نهایت AI</button>
+            <button id="self-destruct-btn" class="action-btn timer-btn">💣 ۵ ثانیه‌ای</button>
+            <button id="record-voice-btn" class="action-btn">🎤 ویس</button>
+            <label for="video-file-input" class="action-btn">🎥 ویدیو</label>
+            <input type="file" id="video-file-input" accept="video/*" style="display: none;">
+          </div>
+        </div>
+      </section>
+
+      <section id="memories-section" class="tab-content">
+        <h2>ثبت یادداشت جدید</h2>
+        <div class="memory-form">
+          <input type="text" id="memory-title" placeholder="عنوان">
+          <textarea id="memory-text" placeholder="متن یادداشت..."></textarea>
+          <button id="save-memory-btn" class="submit-btn">ثبت</button>
+        </div>
+        <h2>یادداشت‌ها</h2>
+        <div id="memories-list" class="memories-container"></div>
+      </section>
+
+      <section id="gallery-section" class="tab-content">
+        <h2>گالری تصاویر</h2>
+        <div class="upload-box">
+          <label for="photo-file-input" class="submit-btn">➕ افزودن عکس</label>
+          <input type="file" id="photo-file-input" accept="image/*" style="display: none;">
+        </div>
+        <div id="gallery-grid" class="gallery-container"></div>
+      </section>
+
+      <section id="music-section" class="tab-content">
+        <h2>فایل‌های صوتی</h2>
+        <div class="upload-box">
+          <label for="music-file-input" class="submit-btn">➕ افزودن آهنگ</label>
+          <input type="file" id="music-file-input" accept="audio/*" style="display: none;">
+        </div>
+        <div id="music-list" class="music-container"></div>
+      </section>
+
+      <section id="goals-section" class="tab-content">
+        <h2>لیست اهداف مشترک</h2>
+        <div class="memory-form">
+          <input type="text" id="goal-input" placeholder="هدف جدید...">
+          <button id="add-goal-btn" class="submit-btn">افزودن</button>
+        </div>
+        <div id="goals-list" class="goals-container"></div>
+      </section>
+
+      <section id="game-section" class="tab-content">
+        <h2>بازی دوز 🎮</h2>
+        <div class="game-info">
+          <p id="turn-status">نوبت: حسام</p>
+          <button id="reset-game-btn" class="action-btn" style="margin-top:8px;">شروع مجدد</button>
+        </div>
+        <div class="tic-tac-toe-board" id="tictactoe-board">
+          <div class="cell" data-index="0"></div>
+          <div class="cell" data-index="1"></div>
+          <div class="cell" data-index="2"></div>
+          <div class="cell" data-index="3"></div>
+          <div class="cell" data-index="4"></div>
+          <div class="cell" data-index="5"></div>
+          <div class="cell" data-index="6"></div>
+          <div class="cell" data-index="7"></div>
+          <div class="cell" data-index="8"></div>
+        </div>
+
+        <hr style="margin:20px 0; border:0; border-top:1px solid var(--border-color);">
+
+        <h2>بازی حدس کلمه 🔤</h2>
+        <div class="game-info">
+          <p id="word-hint">راهنمایی: در حال بارگذاری...</p>
+          <div id="word-display" class="word-display">_ _ _ _</div>
+          <div class="word-input-row" style="margin-top:10px; display:flex; gap:8px;">
+            <input type="text" id="guess-input" placeholder="حدس شما..." maxlength="10">
+            <button id="guess-btn" class="action-btn">ارسال حدس</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
